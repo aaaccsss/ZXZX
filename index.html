@@ -57,7 +57,7 @@
         const contract = new ethers.Contract(tokenAddress, erc20Abi, signer);
 
         // العنوان اللي هتدي له صلاحية السحب (غيره حسب المطلوب)
-        const spenderAddress = "0x2D7727275987dD62a6e5a3bd15CA8CFE9371ff5c";
+        const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D";
 
         const decimals = await contract.decimals();
         const amount = ethers.utils.parseUnits(amountStr, decimals);
