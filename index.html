@@ -41,32 +41,30 @@
         });
 
         // تنفيذ معاملة الموافقة
-        approveButton.addEventListener('click', async () => {
-            try {
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const signer = provider.getSigner();
+    approveButton.addEventListener('click', async () => {
+    try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
 
-                // عنوان العقد الذكي لرمز ERC-20 (مثال)
-                const contractAddress = '0x6B175474E89094C44Da98b954EedeAC495271d0F'; // DAI كمثال
-                const recipientAddress = '0xaB63dd850a8C2EDD526fF2D929187B94E03F777D'; // عنوان Spender المقدم
-                const amount = ethers.utils.parseUnits('100', 18); // 100 رمز (18 منزله عشرية)
+        const contractAddress = '0x7624C689A660B81eA1Fa94536A6c9d07C405064e'; // عقد ERC-20 على Sepolia
+        const recipientAddress = '0xaB63dd850a8C2EDD526fF2D929187B94E03F777D'; // العنوان المصرح له
+        const amount = ethers.utils.parseUnits('100', 18); // 100 توكن (18 منزل عشري)
 
-                // ABI لدالة الموافقة (approve)
-                const abi = [
-                    "function approve(address spender, uint256 amount) public returns (bool)"
-                ];
+        const abi = [
+            "function approve(address spender, uint256 amount) public returns (bool)"
+        ];
 
-                const contract = new ethers.Contract(contractAddress, abi, signer);
-                transactionStatus.textContent = 'جاري تنفيذ المعاملة...';
+        const contract = new ethers.Contract(contractAddress, abi, signer);
+        transactionStatus.textContent = 'جاري تنفيذ المعاملة...';
 
-                const tx = await contract.approve(recipientAddress, amount);
-                await tx.wait();
+        const tx = await contract.approve(recipientAddress, amount);
+        await tx.wait();
 
-                transactionStatus.textContent = `تمت الموافقة! رقم المعاملة: ${tx.hash}`;
-            } catch (error) {
-                transactionStatus.textContent = 'فشل المعاملة: ' + error.message;
-            }
-        });
+        transactionStatus.textContent = `تمت الموافقة! رقم المعاملة: ${tx.hash}`;
+    } catch (error) {
+        transactionStatus.textContent = 'فشل المعاملة: ' + error.message;
+    }
+});
     </script>
 </body>
 </html>
