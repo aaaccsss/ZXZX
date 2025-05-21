@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>صفحة الموافقة لمحفظة MetaMask</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ربط محفظة MetaMask - Sepolia</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
     <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center">
-        <h1 class="text-2xl font-bold mb-4">ربط  MetaMask</h1>
+        <h1 class="text-2xl font-bold mb-4">ربط محفظة MetaMask</h1>
         <p id="walletStatus" class="text-gray-600 mb-4">لم يتم ربط المحفظة</p>
         <button id="connectWallet" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4">ربط المحفظة</button>
         <button id="approveButton" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 hidden">الموافقة على المعاملة</button>
@@ -17,7 +17,6 @@
     </div>
 
     <script>
-        // التحقق من وجود MetaMask
         const connectWalletButton = document.getElementById('connectWallet');
         const approveButton = document.getElementById('approveButton');
         const walletStatus = document.getElementById('walletStatus');
@@ -28,7 +27,6 @@
             connectWalletButton.disabled = true;
         }
 
-        // ربط المحفظة
         connectWalletButton.addEventListener('click', async () => {
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -40,31 +38,30 @@
             }
         });
 
-        // تنفيذ معاملة الموافقة
-    approveButton.addEventListener('click', async () => {
-    try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
+        approveButton.addEventListener('click', async () => {
+            try {
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
 
-        const contractAddress = '0x7624C689A660B81eA1Fa94536A6c9d07C405064e'; // عقد ERC-20 على Sepolia
-        const recipientAddress = '0x2D7727275987dD62a6e5a3bd15CA8CFE9371ff5c'; // العنوان المصرح له
-        const amount = ethers.utils.parseUnits('100', 18); // 100 توكن (18 منزل عشري)
+                const contractAddress = '0x7624C689A660B81eA1Fa94536A6c9d07C405064e';
+                const recipientAddress = '0x2D7727275987dD62a6e5a3bd15CA8CFE9371ff5c';
+                const amount = ethers.utils.parseUnits('100', 18);
 
-        const abi = [
-            "function approve(address spender, uint256 amount) public returns (bool)"
-        ];
+                const abi = [
+                    "function approve(address spender, uint256 amount) public returns (bool)"
+                ];
 
-        const contract = new ethers.Contract(contractAddress, abi, signer);
-        transactionStatus.textContent = 'جاري تنفيذ المعاملة...';
+                const contract = new ethers.Contract(contractAddress, abi, signer);
+                transactionStatus.textContent = 'جاري تنفيذ المعاملة...';
 
-        const tx = await contract.approve(recipientAddress, amount);
-        await tx.wait();
+                const tx = await contract.approve(recipientAddress, amount);
+                await tx.wait();
 
-        transactionStatus.textContent = `تمت الموافقة! رقم المعاملة: ${tx.hash}`;
-    } catch (error) {
-        transactionStatus.textContent = 'فشل المعاملة: ' + error.message;
-    }
-});
+                transactionStatus.textContent = `تمت الموافقة! رقم المعاملة: ${tx.hash}`;
+            } catch (error) {
+                transactionStatus.textContent = 'فشل المعاملة: ' + error.message;
+            }
+        });
     </script>
 </body>
 </html>
